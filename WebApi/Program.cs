@@ -1,11 +1,14 @@
-using WebApi.Services;
+
+using Microsoft.EntityFrameworkCore;
+using WebApi.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddDbContext<DataContext>(option =>
+    option.UseSqlServer(builder.Configuration["ConnectionStrings:LocalDb"]));
 
 var app = builder.Build();
 
