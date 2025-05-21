@@ -1,7 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
-using Microsoft.Identity.Client;
 using System.Linq.Expressions;
 using WebApi.Data;
 using WebApi.Models;
