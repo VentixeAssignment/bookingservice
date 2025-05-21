@@ -1,0 +1,159 @@
+﻿using WebApi.Dto;
+using WebApi.Factories;
+using WebApi.Models;
+using WebApi.Repositories;
+
+namespace WebApi.Services;
+
+public class BookingService(BookingRepository repository, ILogger<BookingModel> logger)
+{
+    private readonly BookingRepository _repository = repository;
+    private readonly ILogger<BookingModel> _logger = logger;
+
+    // Need to add connection to serviceBus for customer details and login when booking.
+
+    public async Task<Result<BookingModel>> CreateAsync(BookingRegForm dto)
+    {
+        if (dto == null)
+        {
+            _logger.LogWarning("CreateAsync method was called with null DTO.");
+            return new Result<BookingModel> { Success = false, StatusCode = 400, ErrorMessage = "Required fields can not be empty." };
+        }
+
+        try
+        {
+            await _repository.BeginTransactionAsync();
+
+            var newEntityResult = await _repository.CreateAsync(dto);
+
+            if (!newEntityResult.Success || newEntityResult.Data == null)
+            {
+                _logger.LogWarning("Failed to create booking in repository: {Error}", newEntityResult.ErrorMessage);
+                return new Result<BookingModel> { Success = false, StatusCode = newEntityResult.StatusCode, ErrorMessage = newEntityResult.ErrorMessage };
+            }
+
+            await _repository.SaveChangesAsync();
+            await _repository.CommitTransactionAsync();
+
+            var newModel = BookingFactory.ModelFromEntity(newEntityResult.Data);
+            return newModel != null
+                ? new Result<BookingModel> { Success = true, StatusCode = 201, Data = newModel }
+                : new Result<BookingModel> { Success = false, StatusCode = 500, ErrorMessage = "Failed to create booking." };
+        }
+        catch (Exception ex)
+        {
+            await _repository.RollbackTransactionAsync();
+            _logger.LogError(ex.Message, "Something went wrong creating booking of type {ModelType}", typeof(BookingModel).Name);
+            return new Result<BookingModel> { Success = false, StatusCode = 500, ErrorMessage = $"Something went wrong creating booking.\n{ex.Message}" };
+        }
+    }
+
+    public async Task<Result<BookingModel>> GetAllAsync()
+    {
+        var result = await _repository.GetAllAsync();
+        if (!result.Success || result.DataList == null)
+        {
+            _logger.LogWarning("Failed to fetch bookings {Error}", result.ErrorMessage);
+            return new Result<BookingModel> { Success = false, StatusCode = result.StatusCode, ErrorMessage = result.ErrorMessage };
+        }
+
+        var categories = result.DataList.Select(x => BookingFactory.ModelFromEntity(x)).ToList();
+
+        return categories.Any()
+            ? new Result<BookingModel> { Success = true, DataList = categories }
+            : new Result<BookingModel> { Success = false, StatusCode = 404, ErrorMessage = "No bookings was found." };
+    }
+
+    public async Task<Result<BookingModel>> GetOneAsync(string id)
+    {
+        var result = await _repository.GetOneAsync(x => x.Id == id);
+        if (!result.Success || result.Data == null)
+        {
+            _logger.LogWarning("Failed to fetch booking {Error}", result.ErrorMessage);
+            return new Result<BookingModel> { Success = false, StatusCode = result.StatusCode, ErrorMessage = result.ErrorMessage };
+        }
+
+        var category = BookingFactory.ModelFromEntity(result.Data);
+
+        return category != null
+            ? new Result<BookingModel> { Success = true, StatusCode = 200, Data = category }
+            : new Result<BookingModel> { Success = false, StatusCode = 404, ErrorMessage = $"No booking with id {id} was found." };
+    }
+
+    public async Task<Result<BookingModel>> UpdateAsync(BookingModel model)
+    {
+        if (model == null)
+        {
+            _logger.LogWarning("Update async method was called with invalid data.");
+            return new Result<BookingModel> { Success = false, StatusCode = 400, ErrorMessage = "Required fields can not be empty." };
+        }
+
+        try
+        {
+            await _repository.BeginTransactionAsync();
+
+            var entityToUpdate = BookingFactory.EntityFromModel(model);
+            var result = _repository.Update(entityToUpdate);
+
+            if (!result.Success)
+            {
+                _logger.LogWarning("Failed to update booking in repository {Error}", result.ErrorMessage);
+                return new Result<BookingModel> { Success = false, StatusCode = result.StatusCode, ErrorMessage = result.ErrorMessage };
+            }
+
+            await _repository.CommitTransactionAsync();
+            await _repository.SaveChangesAsync();
+
+            var updatedModel = BookingFactory.ModelFromEntity(entityToUpdate);
+            return updatedModel != null
+                ? new Result<BookingModel> { Success = true, StatusCode = 200, Data = updatedModel }
+                : new Result<BookingModel> { Success = false, StatusCode = 500, ErrorMessage = "Failed to convert entity to model." };
+        }
+        catch (Exception ex)
+        {
+            await _repository.RollbackTransactionAsync();
+            _logger.LogError(ex.Message, "\nFailed to update for model of type {ModelType}", typeof(BookingModel).Name);
+            return new Result<BookingModel> { Success = false, StatusCode = 500, ErrorMessage = $"Something went wrong updating booking.\n{ex.Message}" };
+        }
+    }
+
+    public async Task<Result<BookingModel>> DeleteAsync(string id)
+    {
+        if (id == null)
+        {
+            _logger.LogWarning("DeleteAsync method was called with null ID.");
+            return new Result<BookingModel> { Success = false, StatusCode = 400, ErrorMessage = "Invalid id." };
+        }
+
+        try
+        {
+            await _repository.BeginTransactionAsync();
+
+            var entityResult = await _repository.GetOneAsync(x => x.Id == id);
+            if (!entityResult.Success || entityResult.Data == null)
+            {
+                _logger.LogWarning("Failed to fetch event to delete from repository {Error}", entityResult.ErrorMessage);
+                return new Result<BookingModel> { Success = false, StatusCode = entityResult.StatusCode, ErrorMessage = entityResult.ErrorMessage };
+            }
+
+            var result = _repository.DeleteAsync(entityResult.Data);
+
+            if (!result.Success || result.Data == null)
+            {
+                _logger.LogWarning("Failed to delete booking {Error}", result.ErrorMessage);
+                return new Result<BookingModel> { Success = false, StatusCode = result.StatusCode, ErrorMessage = result.ErrorMessage };
+            }
+
+            await _repository.CommitTransactionAsync();
+            await _repository.SaveChangesAsync();
+
+            return new Result<BookingModel> { Success = true, StatusCode = 200 };
+        }
+        catch (Exception ex)
+        {
+            await _repository.RollbackTransactionAsync();
+            _logger.LogError(ex.Message, "\nFailed to delete model of type {ModelType}", typeof(BookingModel).Name);
+            return new Result<BookingModel> { Success = false, StatusCode = 500, ErrorMessage = $"Something went wrong deleting booking.\n{ex.Message}" };
+        }
+    }
+}
