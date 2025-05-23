@@ -25,18 +25,18 @@ public class BookingRepository
 
     #region CRUD
 
-    public virtual async Task<Result<BookingEntity>> CreateAsync(BookingRegForm model)
+    public virtual async Task<Result<BookingEntity>> CreateAsync(BookingEntity entity)
     {
-        if (model == null)
+        if (entity == null)
             return new Result<BookingEntity> { Success = false, ErrorMessage = "Invalid data." };
 
         try
         {
             await BeginTransactionAsync();
-            var result = await _context.AddAsync(model);
+            var result = await _context.AddAsync(entity);
 
             return result != null
-                ? new Result<BookingEntity> { Success = true, StatusCode = 201 }
+                ? new Result<BookingEntity> { Success = true, StatusCode = 201, Data = entity }
                 : new Result<BookingEntity> { Success = false, StatusCode = 500, ErrorMessage = "Failed to create event." };
         }
         catch (Exception ex)

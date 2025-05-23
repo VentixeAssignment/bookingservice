@@ -1,0 +1,48 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+option csharp_namespace = "WebApi.Protos";
+
+service BookingHandler {
+	rpc GetEventInformation(EventInformationRequest) returns(EventInformationReply);
+	rpc UpdateSeatsLeft(SeatsRequest) returns(SeatsReply);
+}
+
+message Event {
+	string Id = 1;
+	string EventName = 2;
+	google.protobuf.Timestamp Start = 3;
+	google.protobuf.Timestamp End = 4;
+	int32 SeatsLeft = 5;
+	double PricePerSeat = 6;
+	string Venue = 7;
+	string StreetAddress = 8;
+	string PostalCode = 9;
+	string City = 10;
+	string Country = 11;
+}
+
+message EventInformationRequest {
+	string Id = 1;
+}
+
+message EventInformationReply {
+	Event event = 1;
+	bool Success = 2;
+	string Message = 3;
+}
+
+
+message SeatsRequest {
+	string Id = 1;
+	int32 SeatsOrdered = 2;
+}
+
+message SeatsReply {
+	bool Success = 1;
+	string Message = 2;
+}
+
+
+

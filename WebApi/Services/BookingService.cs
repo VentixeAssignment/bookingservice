@@ -1,16 +1,18 @@
 ﻿using WebApi.Dto;
 using WebApi.Factories;
 using WebApi.Models;
+using WebApi.Protos;
 using WebApi.Repositories;
 
 namespace WebApi.Services;
 
-public class BookingService(BookingRepository repository, ILogger<BookingModel> logger)
+public class BookingService(BookingRepository repository, ILogger<BookingModel> logger, BookingHandler.BookingHandlerClient client)
 {
     private readonly BookingRepository _repository = repository;
     private readonly ILogger<BookingModel> _logger = logger;
+    private readonly BookingHandler.BookingHandlerClient _client = client;
 
-    // Need to add connection to serviceBus for customer details and login when booking.
+
 
     public async Task<Result<BookingModel>> CreateAsync(BookingRegForm dto)
     {
@@ -24,12 +26,31 @@ public class BookingService(BookingRepository repository, ILogger<BookingModel> 
         {
             await _repository.BeginTransactionAsync();
 
-            var newEntityResult = await _repository.CreateAsync(dto);
+            var entity = BookingFactory.EntityFromDto(dto);
+
+            var newEntityResult = await _repository.CreateAsync(entity);
 
             if (!newEntityResult.Success || newEntityResult.Data == null)
             {
-                _logger.LogWarning("Failed to create booking in repository: {Error}", newEntityResult.ErrorMessage);
+                await _repository.RollbackTransactionAsync();
+                _logger.LogWarning($"Failed to create booking in repository: {newEntityResult.ErrorMessage}");
                 return new Result<BookingModel> { Success = false, StatusCode = newEntityResult.StatusCode, ErrorMessage = newEntityResult.ErrorMessage };
+            }
+
+            var seatsRequest = new SeatsRequest
+            {
+                Id = entity.EventId,
+                SeatsOrdered = entity.Seats
+            };
+
+
+            var seatsResult = await _client.UpdateSeatsLeftAsync(seatsRequest);
+
+            if (!seatsResult.Success)
+            {
+                await _repository.RollbackTransactionAsync();
+                _logger.LogWarning($"Failed to update seats available.\n{seatsResult.Message}");
+                return new Result<BookingModel> { Success = false, StatusCode = 400, ErrorMessage = seatsResult.Message };
             }
 
             await _repository.SaveChangesAsync();
@@ -43,7 +64,7 @@ public class BookingService(BookingRepository repository, ILogger<BookingModel> 
         catch (Exception ex)
         {
             await _repository.RollbackTransactionAsync();
-            _logger.LogError(ex.Message, "Something went wrong creating booking of type {ModelType}", typeof(BookingModel).Name);
+            _logger.LogError($"Something went wrong creating booking the event: \n{ex}\n{ex.Message}");
             return new Result<BookingModel> { Success = false, StatusCode = 500, ErrorMessage = $"Something went wrong creating booking.\n{ex.Message}" };
         }
     }
@@ -112,7 +133,7 @@ public class BookingService(BookingRepository repository, ILogger<BookingModel> 
         catch (Exception ex)
         {
             await _repository.RollbackTransactionAsync();
-            _logger.LogError(ex.Message, "\nFailed to update for model of type {ModelType}", typeof(BookingModel).Name);
+            _logger.LogError($"Failed to update booking: \n{ex}\n{ex.Message}");
             return new Result<BookingModel> { Success = false, StatusCode = 500, ErrorMessage = $"Something went wrong updating booking.\n{ex.Message}" };
         }
     }
@@ -152,7 +173,7 @@ public class BookingService(BookingRepository repository, ILogger<BookingModel> 
         catch (Exception ex)
         {
             await _repository.RollbackTransactionAsync();
-            _logger.LogError(ex.Message, "\nFailed to delete model of type {ModelType}", typeof(BookingModel).Name);
+            _logger.LogError($"Failed to delete booking: \n{ex}\n{ex.Message}");
             return new Result<BookingModel> { Success = false, StatusCode = 500, ErrorMessage = $"Something went wrong deleting booking.\n{ex.Message}" };
         }
     }

@@ -5,7 +5,7 @@ namespace WebApi.Models;
 public class BookingModel
 {
     public string Id { get; set; } = null!;
-    public int Seats { get; set; } = 1;
+    public int Seats { get; set; }
     public DateTime CreatedAt { get; set; }
     public decimal TotalPrice { get; set; }
     public string EventId { get; set; } = null!;
