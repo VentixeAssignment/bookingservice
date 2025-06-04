@@ -8,22 +8,27 @@ using WebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
-var azureUri = builder.Configuration["GrpcUri:AzureUri"];
-var localUri = builder.Configuration["GrpcUri:LocalUri"];
+var grpcUri = builder.Configuration["GrpcUri"];
 
-builder.Services.AddGrpcClient<BookingHandler.BookingHandlerClient>(x =>
+
+if (allowedOrigins == null || allowedOrigins.Length == 0)
 {
-    x.Address = new Uri(azureUri!);
-});
+    throw new Exception($"Appsettings not loaded correctly. {allowedOrigins}");
+}
 
 builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins(allowedOrigins!)
+        policy.WithOrigins(allowedOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
+});
+
+builder.Services.AddGrpcClient<BookingHandler.BookingHandlerClient>(x =>
+{
+    x.Address = new Uri(grpcUri!);
 });
 
 builder.Services.AddControllers();
