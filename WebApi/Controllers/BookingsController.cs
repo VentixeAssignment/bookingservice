@@ -10,9 +10,8 @@ namespace WebApi.Controllers;
 
 [Route("api")]
 [ApiController]
-public class BookingsController(BookingHandler.BookingHandlerClient bookingHandlerClient, BookingService service) : ControllerBase
+public class BookingsController(BookingService service) : ControllerBase
 {
-    private readonly BookingHandler.BookingHandlerClient _bookingHandlerClient = bookingHandlerClient;
     private readonly BookingService _service = service;
 
     [Route("create")]
@@ -28,27 +27,21 @@ public class BookingsController(BookingHandler.BookingHandlerClient bookingHandl
             {
                 Id = form.EventId
             };
-            var reply = await _bookingHandlerClient.GetEventInformationAsync(request);
-
-            if (!reply.Success)
-            {
-                return BadRequest("Failed to get event information from eventservice.");
-
-            }
 
             var bookingDto = new BookingRegForm
             {
                 Seats = form.Seats,
-                EventId = reply.Event.Id,
-                TermsAndConditions = true,
+                TotalPrice = form.TotalPrice,
+                EventId = form.EventId ?? "",
+                TermsAndConditions = form.TermsAndConditions,
                 CustomerFirstName = form.CustomerFirstName,
                 CustomerLastName = form.CustomerLastName,
                 CustomerEmail = form.CustomerEmail,
-                CustomerPhone = form.CustomerPhone,
-                CustomerBirthDate = form.CustomerBirthDate,
-                CustomerStreetAddress = form.CustomerStreetAddress,
-                CustomerPostalCode = form.CustomerPostalCode,
-                CustomerCity = form.CustomerCity,
+                CustomerPhone = form.CustomerPhone ?? "",
+                CustomerBirthDate = form.CustomerBirthDate ?? null,
+                CustomerStreetAddress = form.CustomerStreetAddress ?? "",
+                CustomerPostalCode = form.CustomerPostalCode ??  "",
+                CustomerCity = form.CustomerCity ?? "",
             };
             var result = await _service.CreateAsync(bookingDto);
 

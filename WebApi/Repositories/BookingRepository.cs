@@ -32,7 +32,6 @@ public class BookingRepository
 
         try
         {
-            await BeginTransactionAsync();
             var result = await _context.AddAsync(entity);
 
             return result != null

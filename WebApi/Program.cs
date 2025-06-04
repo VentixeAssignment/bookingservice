@@ -1,5 +1,6 @@
 
 using Microsoft.EntityFrameworkCore;
+using Scalar.AspNetCore;
 using WebApi.Data;
 using WebApi.Protos;
 using WebApi.Repositories;
@@ -24,9 +25,9 @@ builder.Services.AddScoped<BookingService>();
 var app = builder.Build();
 
 app.MapOpenApi();
+app.MapScalarApiReference("/api/docs");
 app.UseHttpsRedirection();
 app.UseCors(x => x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
-
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

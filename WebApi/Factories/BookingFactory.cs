@@ -13,7 +13,7 @@ public static class BookingFactory
         {
             Seats = dto.Seats,
             EventId = dto.EventId,
-            TotalPrice = 1,
+            TotalPrice = dto.TotalPrice,
             CustomerId = dto.CustomerId ?? "",
             CustomerFirstName = dto.CustomerFirstName ?? "",
             CustomerLastName = dto.CustomerLastName ?? "",
