@@ -7,10 +7,23 @@ using WebApi.Repositories;
 using WebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+var allowedOrigins = builder.Configuration.GetSection("AllowedOrigins").Get<string[]>();
+var azureUri = builder.Configuration["GrpcUri:AzureUri"];
+var localUri = builder.Configuration["GrpcUri:LocalUri"];
 
 builder.Services.AddGrpcClient<BookingHandler.BookingHandlerClient>(x =>
 {
-    x.Address = new Uri("https://localhost:7157");
+    x.Address = new Uri(azureUri!);
+});
+
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.WithOrigins(allowedOrigins!)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
 });
 
 builder.Services.AddControllers();
@@ -27,7 +40,7 @@ var app = builder.Build();
 app.MapOpenApi();
 app.MapScalarApiReference("/api/docs");
 app.UseHttpsRedirection();
-app.UseCors(x => x.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
+app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
