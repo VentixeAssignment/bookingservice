@@ -30,7 +30,7 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 builder.Services.AddDbContext<DataContext>(option =>
-    option.UseSqlServer(builder.Configuration["ConnectionStrings:LocalDb"]));
+    option.UseSqlServer(builder.Configuration["ConnectionStrings:VentixeDb"]));
 
 builder.Services.AddScoped<BookingRepository>();
 builder.Services.AddScoped<BookingService>();
