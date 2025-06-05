@@ -1,6 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using System.Net;
 using System.Security.Authentication;
 using WebApi.Data;
 using WebApi.Protos;
@@ -35,9 +36,16 @@ builder.Services.AddGrpcClient<BookingHandler.BookingHandlerClient>(x =>
 })
 .ConfigurePrimaryHttpMessageHandler(() =>
 {
-    return new HttpClientHandler
+    return new SocketsHttpHandler
     {
-        SslProtocols = SslProtocols.Tls12
+        SslOptions = { EnabledSslProtocols = SslProtocols.Tls12 },
+        AllowAutoRedirect = true,
+        AutomaticDecompression = DecompressionMethods.All,
+        PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
+        KeepAlivePingDelay = TimeSpan.FromSeconds(30),
+        KeepAlivePingTimeout = TimeSpan.FromSeconds(15),
+        KeepAlivePingPolicy = HttpKeepAlivePingPolicy.Always,
+        EnableMultipleHttp2Connections = true
     };
 });
 
