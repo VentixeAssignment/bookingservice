@@ -1,6 +1,7 @@
 
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using System.Security.Authentication;
 using WebApi.Data;
 using WebApi.Protos;
 using WebApi.Repositories;
@@ -31,6 +32,13 @@ builder.Services.AddCors(options =>
 builder.Services.AddGrpcClient<BookingHandler.BookingHandlerClient>(x =>
 {
     x.Address = new Uri(grpcUri!);
+})
+.ConfigurePrimaryHttpMessageHandler(() =>
+{
+    return new HttpClientHandler
+    {
+        SslProtocols = SslProtocols.Tls12
+    };
 });
 
 builder.Services.AddControllers();
