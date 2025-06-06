@@ -6,11 +6,12 @@ using WebApi.Repositories;
 
 namespace WebApi.Services;
 
-public class BookingService(BookingRepository repository, ILogger<BookingModel> logger, BookingHandler.BookingHandlerClient client)
+public class BookingService(BookingRepository repository, ILogger<BookingModel> logger, GrpcService grpc)
 {
     private readonly BookingRepository _repository = repository;
     private readonly ILogger<BookingModel> _logger = logger;
-    private readonly BookingHandler.BookingHandlerClient _client = client;
+    //private readonly BookingHandler.BookingHandlerClient _client = client;
+    private readonly GrpcService _grpc = grpc;
 
 
 
@@ -44,7 +45,7 @@ public class BookingService(BookingRepository repository, ILogger<BookingModel> 
             };
 
 
-            var seatsResult = await _client.UpdateSeatsLeftAsync(seatsRequest);
+            var seatsResult = await _grpc.UpdateSeats(seatsRequest);
 
             if (!seatsResult.Success)
             {

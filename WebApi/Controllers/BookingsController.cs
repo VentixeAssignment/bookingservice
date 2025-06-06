@@ -1,6 +1,8 @@
 ﻿using Grpc.Core;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.Diagnostics;
 using WebApi.Dto;
 using WebApi.Models;
 using WebApi.Protos;
@@ -45,14 +47,21 @@ public class BookingsController(BookingService service) : ControllerBase
             };
             var result = await _service.CreateAsync(bookingDto);
 
+            Debug.WriteLine($"Create booking result: {result.Success}, StatusCode: {result.StatusCode}, ErrorMessage: {result.ErrorMessage}");
+
+            if(result.StatusCode == 500)
+            {
+                return StatusCode(500, new { message = $"Status 500: {result.Success}\n{result.StatusCode}\n{result.ErrorMessage}" });
+            }
+
             return result.Success
                 ? Ok(result)
-                : BadRequest($"{result.Success}\n{result.StatusCode}\n{result.ErrorMessage}");
+                : BadRequest(new { message = $"Bad request: {result.Success}\n{result.StatusCode}\n{result.ErrorMessage}" });
 
         }
         catch (RpcException ex)
         {
-            return BadRequest(ex.Status.Detail);
+            return BadRequest(new { message = $"Bad request:{ex.Message}" });
         }
     }
 }

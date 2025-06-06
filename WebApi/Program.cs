@@ -9,7 +9,8 @@ using WebApi.Repositories;
 using WebApi.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-var grpcUri = builder.Configuration["GrpcUri"];
+
+builder.Logging.SetMinimumLevel(LogLevel.Information);
 
 var allowedOrigins = builder.Configuration["AllowedOrigins"];
 var originArray = allowedOrigins?.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
@@ -30,24 +31,6 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddGrpcClient<BookingHandler.BookingHandlerClient>(x =>
-{
-    x.Address = new Uri(grpcUri!);
-});
-//.ConfigurePrimaryHttpMessageHandler(() =>
-//{
-//    return new SocketsHttpHandler
-//    {
-//        SslOptions = { EnabledSslProtocols = SslProtocols.Tls12 },
-//        AllowAutoRedirect = true,
-//        AutomaticDecompression = DecompressionMethods.All,
-//        PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
-//        KeepAlivePingDelay = TimeSpan.FromSeconds(30),
-//        KeepAlivePingTimeout = TimeSpan.FromSeconds(15),
-//        KeepAlivePingPolicy = HttpKeepAlivePingPolicy.Always,
-//        EnableMultipleHttp2Connections = true
-//    };
-//});
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
@@ -55,16 +38,33 @@ builder.Services.AddOpenApi();
 builder.Services.AddDbContext<DataContext>(option =>
     option.UseSqlServer(builder.Configuration["ConnectionStrings:VentixeDb"]));
 
+builder.Services.AddScoped<GrpcService>();
 builder.Services.AddScoped<BookingRepository>();
 builder.Services.AddScoped<BookingService>();
 
-var app = builder.Build();
 
+var port = Environment.GetEnvironmentVariable("PORT");
+
+builder.WebHost.ConfigureKestrel(options =>
+{
+    if (port is not null)
+    {
+        options.ListenAnyIP(int.Parse(port));
+    }
+    else
+    {
+        options.ListenAnyIP(7084);
+    }
+});
+
+var app = builder.Build();
 app.MapOpenApi();
 app.MapScalarApiReference("/api/docs");
+
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors();
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
