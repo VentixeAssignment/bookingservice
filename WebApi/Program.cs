@@ -33,21 +33,21 @@ builder.Services.AddCors(options =>
 builder.Services.AddGrpcClient<BookingHandler.BookingHandlerClient>(x =>
 {
     x.Address = new Uri(grpcUri!);
-})
-.ConfigurePrimaryHttpMessageHandler(() =>
-{
-    return new SocketsHttpHandler
-    {
-        SslOptions = { EnabledSslProtocols = SslProtocols.Tls12 },
-        AllowAutoRedirect = true,
-        AutomaticDecompression = DecompressionMethods.All,
-        PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
-        KeepAlivePingDelay = TimeSpan.FromSeconds(30),
-        KeepAlivePingTimeout = TimeSpan.FromSeconds(15),
-        KeepAlivePingPolicy = HttpKeepAlivePingPolicy.Always,
-        EnableMultipleHttp2Connections = true
-    };
 });
+//.ConfigurePrimaryHttpMessageHandler(() =>
+//{
+//    return new SocketsHttpHandler
+//    {
+//        SslOptions = { EnabledSslProtocols = SslProtocols.Tls12 },
+//        AllowAutoRedirect = true,
+//        AutomaticDecompression = DecompressionMethods.All,
+//        PooledConnectionIdleTimeout = TimeSpan.FromMinutes(2),
+//        KeepAlivePingDelay = TimeSpan.FromSeconds(30),
+//        KeepAlivePingTimeout = TimeSpan.FromSeconds(15),
+//        KeepAlivePingPolicy = HttpKeepAlivePingPolicy.Always,
+//        EnableMultipleHttp2Connections = true
+//    };
+//});
 
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
