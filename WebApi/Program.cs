@@ -1,8 +1,11 @@
 
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using System.Net;
 using System.Security.Authentication;
+using System.Text;
 using WebApi.Data;
 using WebApi.Protos;
 using WebApi.Repositories;
@@ -53,8 +56,31 @@ builder.WebHost.ConfigureKestrel(options =>
     }
     else
     {
-        options.ListenAnyIP(7084);
+        options.ListenAnyIP(5020); 
+        options.ListenAnyIP(7084, listenOptions => listenOptions.UseHttps()); 
     }
+});
+
+
+builder.Services.AddAuthentication(x =>
+{
+    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(x =>
+{
+    x.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        ValidateIssuer = true,
+        ValidAudience = builder.Configuration["Jwt:Audience"],
+        ValidateAudience = true,
+        IssuerSigningKey = new SymmetricSecurityKey
+            (Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+        ValidateIssuerSigningKey = true,
+        ValidateLifetime = true
+    };
 });
 
 var app = builder.Build();

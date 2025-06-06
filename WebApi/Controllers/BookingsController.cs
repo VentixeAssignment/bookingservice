@@ -1,4 +1,5 @@
 ﻿using Grpc.Core;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -10,7 +11,8 @@ using WebApi.Services;
 
 namespace WebApi.Controllers;
 
-[Route("api")]
+[Authorize]
+[Route("api/bookings")]
 [ApiController]
 public class BookingsController(BookingService service) : ControllerBase
 {
