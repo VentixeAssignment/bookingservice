@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using WebApi.Dto;
 using WebApi.Models;
 using WebApi.Protos;
@@ -11,7 +13,7 @@ using WebApi.Services;
 
 namespace WebApi.Controllers;
 
-//[Authorize]
+[Authorize]
 [Route("api/bookings")]
 [ApiController]
 public class BookingsController(BookingService service) : ControllerBase
@@ -24,6 +26,12 @@ public class BookingsController(BookingService service) : ControllerBase
     {
         if (!ModelState.IsValid)
             return BadRequest("Request is incomplete.");
+
+        var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
+            ?? User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value;
+
+        if (string.IsNullOrEmpty(userId))
+            return Unauthorized("You have to sign in to book an event.");
 
         try
         {
@@ -38,6 +46,7 @@ public class BookingsController(BookingService service) : ControllerBase
                 TotalPrice = form.TotalPrice,
                 EventId = form.EventId ?? "",
                 TermsAndConditions = form.TermsAndConditions,
+                CustomerId = userId,
                 CustomerFirstName = form.CustomerFirstName,
                 CustomerLastName = form.CustomerLastName,
                 CustomerEmail = form.CustomerEmail,

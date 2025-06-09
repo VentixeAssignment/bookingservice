@@ -5,7 +5,7 @@ namespace WebApi.Dto;
 public class BookingRegForm : IValidatableObject
 {
     [Required(ErrorMessage = "Field is required.")]
-    public int Seats { get; set; } = 1;
+    public int Seats { get; set; }
 
 
     [Required(ErrorMessage = "Field is required.")]
@@ -20,7 +20,7 @@ public class BookingRegForm : IValidatableObject
     public bool TermsAndConditions { get; set; }
 
 
-    // CustomerId or CustomerName and CustomerEmail must be assigned to book an event.
+    // In the future customerId or CustomerName and CustomerEmail must be assigned to book an event.
     public string? CustomerId { get; set; }
 
 
