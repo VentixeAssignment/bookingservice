@@ -11,7 +11,7 @@ using WebApi.Services;
 
 namespace WebApi.Controllers;
 
-[Authorize]
+//[Authorize]
 [Route("api/bookings")]
 [ApiController]
 public class BookingsController(BookingService service) : ControllerBase

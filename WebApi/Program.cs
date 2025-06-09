@@ -1,6 +1,7 @@
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Scalar.AspNetCore;
 using System.Net;
@@ -56,17 +57,16 @@ builder.WebHost.ConfigureKestrel(options =>
     }
     else
     {
-        options.ListenAnyIP(5020); 
+        options.ListenAnyIP(5022); 
         options.ListenAnyIP(7084, listenOptions => listenOptions.UseHttps()); 
     }
 });
 
-
+builder.Services.AddAuthorization();
 builder.Services.AddAuthentication(x =>
 {
     x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-    x.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(x =>
 {
@@ -80,6 +80,14 @@ builder.Services.AddAuthentication(x =>
             (Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
         ValidateIssuerSigningKey = true,
         ValidateLifetime = true
+    };
+    x.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            Console.WriteLine($"Authentication failed: {context.Exception.Message}");
+            return Task.CompletedTask;
+        }
     };
 });
 
