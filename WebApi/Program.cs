@@ -62,34 +62,34 @@ builder.WebHost.ConfigureKestrel(options =>
     }
 });
 
-builder.Services.AddAuthorization();
-builder.Services.AddAuthentication(x =>
-{
-    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(x =>
-{
-    x.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidateIssuer = true,
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        ValidateAudience = true,
-        IssuerSigningKey = new SymmetricSecurityKey
-            (Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
-        ValidateIssuerSigningKey = true,
-        ValidateLifetime = true
-    };
-    x.Events = new JwtBearerEvents
-    {
-        OnAuthenticationFailed = context =>
-        {
-            Console.WriteLine($"Authentication failed: {context.Exception.Message}");
-            return Task.CompletedTask;
-        }
-    };
-});
+//builder.Services.AddAuthorization();
+//builder.Services.AddAuthentication(x =>
+//{
+//    x.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+//    x.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+//})
+//.AddJwtBearer(x =>
+//{
+//    x.TokenValidationParameters = new TokenValidationParameters
+//    {
+//        ValidIssuer = builder.Configuration["Jwt:Issuer"],
+//        ValidateIssuer = true,
+//        ValidAudience = builder.Configuration["Jwt:Audience"],
+//        ValidateAudience = true,
+//        IssuerSigningKey = new SymmetricSecurityKey
+//            (Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+//        ValidateIssuerSigningKey = true,
+//        ValidateLifetime = true
+//    };
+//    x.Events = new JwtBearerEvents
+//    {
+//        OnAuthenticationFailed = context =>
+//        {
+//            Console.WriteLine($"Authentication failed: {context.Exception.Message}");
+//            return Task.CompletedTask;
+//        }
+//    };
+//});
 
 var app = builder.Build();
 app.MapOpenApi();
